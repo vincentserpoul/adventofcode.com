@@ -1,0 +1,6 @@
+[package]
+name = "adventofcode_day_2"
+version = "0.1.0"
+authors = ["Vincent Serpoul <vincent@serpoul.com>"]
+
+[dependencies]
