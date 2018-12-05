@@ -5,6 +5,13 @@ use std::io::{self, BufReader};
 
 fn main() -> io::Result<()> {
     println!("checksum: {}", part1());
+    println!(
+        "similar boxes: {}",
+        match part2() {
+            Some(s) => s,
+            None => "no match found".to_string(),
+        }
+    );
     Ok(())
 }
 
@@ -15,7 +22,7 @@ fn part1() -> i32 {
     let mut twos = 0;
     let mut threes = 0;
 
-    BufReader::new(reader)
+    reader
         .lines()
         .map(|l| {
             let mut letter_freq = HashMap::new();
@@ -45,4 +52,64 @@ fn part1() -> i32 {
         });
 
     twos * threes
+}
+
+fn part2() -> Option<String> {
+    let f = File::open("input.txt").unwrap();
+
+    for l in BufReader::new(f).lines().map(|l| l.unwrap()) {
+        if let Some(s) = find_one_char_matching_box(&l) {
+            return Some(get_common_chars(&s, &l));
+        }
+    }
+
+    None
+}
+
+fn find_one_char_matching_box(a: &str) -> Option<String> {
+    let f = File::open("input.txt").unwrap();
+    BufReader::new(f)
+        .lines()
+        .map(|o| o.unwrap())
+        .find(|o| are_one_char_diff(&a, &o))
+}
+
+fn are_one_char_diff(a: &str, b: &str) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let x = a.chars().zip(b.chars()).fold(0, |acc, (f, g)| {
+        if f == g {
+            return acc + 1;
+        }
+        acc
+    });
+    if x == a.len() - 1 {
+        return true;
+    }
+    false
+}
+
+fn get_common_chars(a: &str, b: &str) -> String {
+    a.chars()
+        .zip(b.chars())
+        .filter(|(ac, bc)| ac == bc)
+        .map(|x| x.0)
+        .collect()
+}
+
+#[test]
+fn test_get_common_chars() {
+    assert_eq!(
+        get_common_chars(&String::from("te"), &String::from("tes")),
+        "te"
+    );
+}
+
+#[test]
+fn test_are_one_char_diff() {
+    assert!(are_one_char_diff(
+        &String::from("tev"),
+        &String::from("tes")
+    ));
 }
