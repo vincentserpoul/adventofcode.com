@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
 use std::fmt::Display;
@@ -15,7 +16,7 @@ fn main() -> io::Result<()> {
         .map(|s| Fabric::from_str(&s).unwrap())
         .for_each(|f| s.inject_into_canvas(&f));
 
-    println!("{}", s.dupl_count);
+    println!("{}", s);
     Ok(())
 }
 
@@ -29,32 +30,60 @@ struct Fabric {
 }
 
 struct Solution {
-    canvas: HashSet<(u32, u32)>,
+    canvas: HashMap<(u32, u32), u32>,
     dupl_points: HashSet<(u32, u32)>,
     dupl_count: u32,
+    fabric_ids: HashSet<u32>,
+    dupl_fabric_ids: HashSet<u32>,
 }
 
 impl Solution {
     fn new() -> Solution {
         Solution {
-            canvas: HashSet::new(),
+            canvas: HashMap::new(),
             dupl_points: HashSet::new(),
             dupl_count: 0,
+            fabric_ids: HashSet::new(),
+            dupl_fabric_ids: HashSet::new(),
         }
     }
 
     fn inject_into_canvas(&mut self, f: &Fabric) {
+        // add the fabricids
+        self.fabric_ids.insert(f.id);
         (f.dist_from_top..(f.dist_from_top + f.height)).for_each(|y| {
             (f.dist_from_left..(f.width + f.dist_from_left)).for_each(|x| {
-                // if point has already been covered
-                if !self.canvas.insert((x, y)) {
+                // if the point already belongs to a fabric
+                if let Some(eid) = self.canvas.get(&(x, y)) {
+                    // add the old fid and the new fid to the dupl fids
+                    self.dupl_fabric_ids.insert(*eid);
+                    self.dupl_fabric_ids.insert(f.id);
+                    self.canvas.insert((x, y), f.id);
                     // if point was never counted
                     if self.dupl_points.insert((x, y)) {
                         self.dupl_count += 1;
                     }
+                } else {
+                    self.canvas.insert((x, y), f.id);
                 }
             })
         });
+    }
+}
+
+impl Display for Solution {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let non_dupl_fabric_id = self
+            .fabric_ids
+            .difference(&self.dupl_fabric_ids)
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(
+            f,
+            "Canvas with {} covered more than once square inches\nfabrics with no recovered square inches: #{}",
+            self.dupl_count, non_dupl_fabric_id,
+        )
     }
 }
 
@@ -127,6 +156,7 @@ fn test_inject_into_canvas_0() {
     s.inject_into_canvas(&line_to_fabric("#2 @ 3,1: 4x4").unwrap());
     s.inject_into_canvas(&line_to_fabric("#3 @ 5,5: 2x2").unwrap());
 
+    assert_eq!(s.dupl_count, 4);
     assert_eq!(s.dupl_count, 4);
 }
 
