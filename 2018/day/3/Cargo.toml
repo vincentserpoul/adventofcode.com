@@ -2,5 +2,6 @@
 name = "adventofcode_day_3"
 version = "0.1.0"
 authors = ["Vincent Serpoul <vincent@serpoul.com>"]
+edition = "2018"
 
 [dependencies]
