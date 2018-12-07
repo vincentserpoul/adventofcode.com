@@ -1,8 +1,23 @@
+use std::collections::HashSet;
 use std::fmt;
+use std::fmt::Display;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufReader};
 use std::str::FromStr;
+
+fn main() -> io::Result<()> {
+    let f = File::open("input.txt").unwrap();
+    let mut s = Solution::new();
+    BufReader::new(f)
+        .lines()
+        .map(|l| l.unwrap())
+        .map(|s| Fabric::from_str(&s).unwrap())
+        .for_each(|f| s.inject_into_canvas(&f));
+
+    println!("{}", s.dupl_count);
+    Ok(())
+}
 
 #[derive(PartialEq, Debug)]
 struct Fabric {
@@ -13,6 +28,36 @@ struct Fabric {
     height: u32,
 }
 
+struct Solution {
+    canvas: HashSet<(u32, u32)>,
+    dupl_points: HashSet<(u32, u32)>,
+    dupl_count: u32,
+}
+
+impl Solution {
+    fn new() -> Solution {
+        Solution {
+            canvas: HashSet::new(),
+            dupl_points: HashSet::new(),
+            dupl_count: 0,
+        }
+    }
+
+    fn inject_into_canvas(&mut self, f: &Fabric) {
+        (f.dist_from_top..(f.dist_from_top + f.height)).for_each(|y| {
+            (f.dist_from_left..(f.width + f.dist_from_left)).for_each(|x| {
+                // if point has already been covered
+                if !self.canvas.insert((x, y)) {
+                    // if point was never counted
+                    if self.dupl_points.insert((x, y)) {
+                        self.dupl_count += 1;
+                    }
+                }
+            })
+        });
+    }
+}
+
 impl FromStr for Fabric {
     type Err = ();
 
@@ -21,7 +66,7 @@ impl FromStr for Fabric {
     }
 }
 
-impl fmt::Display for Fabric {
+impl Display for Fabric {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -29,15 +74,6 @@ impl fmt::Display for Fabric {
             self.id, self.dist_from_left, self.dist_from_top, self.width, self.height
         )
     }
-}
-
-fn main() -> io::Result<()> {
-    let f = File::open("input.txt").unwrap();
-    BufReader::new(f)
-        .lines()
-        .map(|l| l.unwrap())
-        .for_each(|l| println!("{}", Fabric::from_str(&l).unwrap()));
-    Ok(())
 }
 
 fn line_to_fabric(l: &str) -> Option<Fabric> {
@@ -82,4 +118,25 @@ fn test_line_to_fabric() {
             height: 6,
         }),
     );
+}
+
+#[test]
+fn test_inject_into_canvas_0() {
+    let mut s = Solution::new();
+    s.inject_into_canvas(&line_to_fabric("#1 @ 1,3: 4x4").unwrap());
+    s.inject_into_canvas(&line_to_fabric("#2 @ 3,1: 4x4").unwrap());
+    s.inject_into_canvas(&line_to_fabric("#3 @ 5,5: 2x2").unwrap());
+
+    assert_eq!(s.dupl_count, 4);
+}
+
+#[test]
+fn test_inject_into_canvas_1() {
+    let mut s = Solution::new();
+    s.inject_into_canvas(&line_to_fabric("#1 @ 1,3: 4x4").unwrap());
+    s.inject_into_canvas(&line_to_fabric("#2 @ 3,1: 4x4").unwrap());
+    s.inject_into_canvas(&line_to_fabric("#3 @ 5,5: 2x2").unwrap());
+    s.inject_into_canvas(&line_to_fabric("#4 @ 3,3: 2x2").unwrap());
+
+    assert_eq!(s.dupl_count, 4);
 }
