@@ -1,8 +1,10 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufReader};
+use std::usize::MAX;
 
 struct Polymer {
+    ignored_unit_type: Option<char>,
     units: Vec<Unit>,
 }
 
@@ -28,13 +30,21 @@ impl Unit {
 }
 
 impl Polymer {
-    fn new() -> Polymer {
-        Polymer { units: Vec::new() }
+    fn new(iut: Option<char>) -> Polymer {
+        Polymer {
+            ignored_unit_type: iut,
+            units: Vec::new(),
+        }
     }
 
     fn add_unit(&mut self, c: char) {
         // Process new unit
         let nu = Unit::new(c);
+
+        // Return early if it is an ignored unit type
+        if Some(nu.t) == self.ignored_unit_type {
+            return;
+        }
 
         // Get last pushed unit
         let lu = match self.units.last() {
@@ -57,13 +67,21 @@ impl Polymer {
 }
 
 fn main() -> io::Result<()> {
-    let f = File::open("input.txt").unwrap();
-    let mut p = Polymer::new();
-    BufReader::new(f)
-        .lines()
-        .map(|l| l.unwrap())
-        .for_each(|l| l.chars().for_each(|c| p.add_unit(c)));
+    let mut min_len = MAX;
+    let mut min_len_char = 'a';
+    for alpha in ("abcdefghijklmnopqrstuvwxyz").chars() {
+        let mut p = Polymer::new(Some(alpha));
+        let f = File::open("input.txt").unwrap();
+        BufReader::new(f)
+            .lines()
+            .map(|l| l.unwrap())
+            .for_each(|l| l.chars().for_each(|c| p.add_unit(c)));
+        if p.units.len() < min_len {
+            min_len = p.units.len();
+            min_len_char = alpha;
+        }
+    }
+    println!("{} for {}", min_len, min_len_char);
 
-    println!("{}", p.units.len());
     Ok(())
 }
