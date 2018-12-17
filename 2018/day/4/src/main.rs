@@ -21,10 +21,18 @@ fn main() -> io::Result<()> {
     tt.parse_state();
 
     let lazy_guard = tt.most_asleep_guard();
-    let laziness = tt.most_slept_minute(lazy_guard);
+    let laziness = tt.most_slept_minute_for_a_specific_guard(lazy_guard);
     println!(
         "the laziest guard is {} who slept {} times at minute {}, the answer is then: {}",
-        lazy_guard, laziness.1, laziness.0, lazy_guard * laziness.0
+        lazy_guard,
+        laziness.1,
+        laziness.0,
+        lazy_guard * laziness.0
+    );
+
+    let laziest = tt.most_slept_minute();
+    println!("the laziest overall is guard {} who slept for {} times at minute {}, the answer to part 2 is then {}",
+        laziest.0, laziest.2, laziest.1, laziest.0 * laziest.1,
     );
 
     Ok(())
@@ -166,7 +174,23 @@ impl TimeTable {
         max_guard_id
     }
 
-    fn most_slept_minute(&self, guard_id: u32) -> (u32, u32) {
+    fn most_slept_minute(&self) -> (u32, u32, u32) {
+        let mut guard_id: u32 = 0;
+        let mut most_slept_minute_time: u32 = 0;
+        let mut most_slept_minute: u32 = 0;
+        self.asleep_minutes.iter().for_each(|(gid, min_time)| {
+            min_time.iter().for_each(|(m, t)| {
+                if *t > most_slept_minute_time {
+                    most_slept_minute_time = *t;
+                    most_slept_minute = *m;
+                    guard_id = *gid;
+                }
+            });
+        });
+        (guard_id, most_slept_minute, most_slept_minute_time)
+    }
+
+    fn most_slept_minute_for_a_specific_guard(&self, guard_id: u32) -> (u32, u32) {
         let mut most_slept_minute_time: u32 = 0;
         let mut most_slept_minute: u32 = 0;
         self.asleep_minutes[&guard_id].iter().for_each(|(m, t)| {
