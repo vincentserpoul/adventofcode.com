@@ -25,6 +25,7 @@ fn main() -> io::Result<()> {
     // println!("{:?}", c.excluded_areas);
 
     println!("{:?}", c.find_largest_finite_area());
+    println!("{:?}", c.find_points_less_then(10000));
 
     Ok(())
 }
@@ -69,6 +70,7 @@ impl Canvas {
                     x,
                     y,
                     closest_point_id: Vec::new(),
+                    point_dist: HashMap::new(),
                     dist: 0,
                 };
                 let min_dist = self
@@ -78,10 +80,12 @@ impl Canvas {
                     .min()
                     .unwrap();
                 for (i, mp) in self.marked_points.iter().enumerate() {
-                    if dist(&p, mp) == min_dist {
+                    let dist = dist(&p, mp);
+                    if dist == min_dist {
                         p.closest_point_id.push(i);
                         p.dist = min_dist;
                     }
+                    p.point_dist.insert(i, dist);
                 }
                 self.points.push(p);
             }
@@ -132,6 +136,19 @@ impl Canvas {
             .max()
             .unwrap()
     }
+
+    fn find_points_less_then(&self, limit_dist: i32) -> usize {
+        self.points
+            .iter()
+            .filter(|p| {
+                p.point_dist.iter().fold(0, |mut cum, (_k, d)| {
+                    cum += d;
+                    cum
+                }) < limit_dist
+            })
+            .collect::<Vec<&Point>>()
+            .len()
+    }
 }
 
 #[derive(Debug)]
@@ -144,6 +161,7 @@ struct MarkedPoint {
 struct Point {
     closest_point_id: Vec<usize>,
     dist: i32,
+    point_dist: HashMap<usize, i32>,
     x: i32,
     y: i32,
 }
