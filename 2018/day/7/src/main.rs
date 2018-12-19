@@ -10,15 +10,15 @@ use std::str::FromStr;
 
 use regex::Regex;
 
-// const WORKERS_COUNT: usize = 5;
-// const MIN_S_STEP: usize = 60;
+const WORKERS_COUNT: usize = 5;
+const MIN_S_STEP: usize = 60;
 
-const WORKERS_COUNT: usize = 2;
-const MIN_S_STEP: usize = 0;
+// const WORKERS_COUNT: usize = 2;
+// const MIN_S_STEP: usize = 0;
 
 fn main() -> io::Result<()> {
-    // let f = File::open("input.txt").unwrap();
-    let f = File::open("./src/test_input.txt").unwrap();
+    let f = File::open("input.txt").unwrap();
+    // let f = File::open("./src/test_input.txt").unwrap();
 
     let mut deps: HashMap<char, Deps> = HashMap::new();
 
@@ -79,15 +79,15 @@ fn main() -> io::Result<()> {
             }
         });
 
-        // find a free worker
-        let free_worker_idx = workers
+        // find the free workers
+        let free_worker_idxs = workers
             .iter()
             .enumerate()
             .filter(|(_, w)| w.is_none())
             .map(|(i, _)| i)
-            .nth(0);
+            .collect::<Vec<usize>>();
 
-        if free_worker_idx.is_some() {
+        for free_worker_idx in free_worker_idxs {
             // find next possible step
             let mut potential_next = deps
                 .iter()
@@ -99,19 +99,29 @@ fn main() -> io::Result<()> {
                 .map(|(k, _v)| *k)
                 .collect::<Vec<char>>();
 
-            if potential_next.is_empty() && chain_processing.is_empty() {
-                break;
-            }
-
             if !potential_next.is_empty() {
                 potential_next.sort();
 
                 // Lock the step to the free worker
-                workers[free_worker_idx.unwrap()] =
-                    Some(CurrStep::new(potential_next[0], seconds_passed));
+                workers[free_worker_idx] = Some(CurrStep::new(potential_next[0], seconds_passed));
 
                 chain_processing.insert(potential_next[0]);
             }
+        }
+
+        if deps
+            .iter()
+            .filter(|(k, v)| {
+                v.follows.is_empty()
+                    && !chain_processing.contains(k)
+                    && chain.iter().find(|c| c == k).is_none()
+            })
+            .map(|(k, _v)| *k)
+            .next()
+            .is_none()
+            && chain_processing.is_empty()
+        {
+            break;
         }
 
         print!("{}s: ", seconds_passed);
