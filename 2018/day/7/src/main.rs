@@ -2,13 +2,19 @@
 extern crate lazy_static;
 extern crate regex;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufReader};
 use std::str::FromStr;
 
 use regex::Regex;
+
+// const WORKERS_COUNT: usize = 5;
+// const MIN_S_STEP: usize = 60;
+
+const WORKERS_COUNT: usize = 2;
+const MIN_S_STEP: usize = 0;
 
 fn main() -> io::Result<()> {
     // let f = File::open("input.txt").unwrap();
@@ -47,27 +53,81 @@ fn main() -> io::Result<()> {
     });
 
     let mut chain: Vec<char> = Vec::new();
+    let mut chain_processing: HashSet<char> = HashSet::new();
+
+    let mut workers: [Option<CurrStep>; WORKERS_COUNT] = [None; WORKERS_COUNT];
+    let mut seconds_passed = 0;
 
     loop {
-        // find next possible step
-        let mut potential_next = deps
-            .iter()
-            .filter(|(_k, v)| v.follows.len() == 0)
-            .filter(|(k, _v)| chain.iter().find(|c| c == k).is_none())
-            .map(|(k, _v)| *k)
-            .collect::<Vec<char>>();
+        // Remove steps from ended worker
+        workers.iter_mut().filter(|w| w.is_some()).for_each(|w| {
+            let wu = w.unwrap();
+            if wu.freed_at == seconds_passed {
+                // pushing in result chain
+                chain.push(wu.letter);
 
-        if potential_next.len() == 0 {
-            break;
+                // remove this letter from all the follows
+                deps.iter_mut().for_each(|(_k, v)| {
+                    v.follows.retain(|l| *l != wu.letter);
+                });
+
+                // remove this letter from the processing
+                chain_processing.remove(&wu.letter);
+
+                // remove work from worker
+                *w = None;
+            }
+        });
+
+        // find a free worker
+        let free_worker_idx = workers
+            .iter()
+            .enumerate()
+            .filter(|(_, w)| w.is_none())
+            .map(|(i, _)| i)
+            .nth(0);
+
+        if free_worker_idx.is_some() {
+            // find next possible step
+            let mut potential_next = deps
+                .iter()
+                .filter(|(k, v)| {
+                    v.follows.is_empty()
+                        && !chain_processing.contains(k)
+                        && chain.iter().find(|c| c == k).is_none()
+                })
+                .map(|(k, _v)| *k)
+                .collect::<Vec<char>>();
+
+            if potential_next.is_empty() && chain_processing.is_empty() {
+                break;
+            }
+
+            if !potential_next.is_empty() {
+                potential_next.sort();
+
+                // Lock the step to the free worker
+                workers[free_worker_idx.unwrap()] =
+                    Some(CurrStep::new(potential_next[0], seconds_passed));
+
+                chain_processing.insert(potential_next[0]);
+            }
         }
 
-        potential_next.sort();
-        chain.push(potential_next[0]);
-
-        // remove this letter from all the follows
-        deps.iter_mut().for_each(|(_k, v)| {
-            v.follows.retain(|l| *l != potential_next[0]);
+        print!("{}s: ", seconds_passed);
+        workers.iter().for_each(|w| {
+            print!(
+                "{}",
+                w.unwrap_or(CurrStep {
+                    letter: '.',
+                    freed_at: 0
+                })
+                .letter
+            )
         });
+        println!();
+
+        seconds_passed += 1;
     }
 
     let ch = chain.iter().fold(String::from(""), |mut c, e| {
@@ -75,9 +135,24 @@ fn main() -> io::Result<()> {
         c
     });
 
-    println!("{}", ch);
+    println!("it took {}s to do {}", seconds_passed, ch);
 
     Ok(())
+}
+
+#[derive(Debug, Copy, Clone)]
+struct CurrStep {
+    letter: char,
+    freed_at: usize,
+}
+
+impl CurrStep {
+    fn new(letter: char, curr_sec: usize) -> CurrStep {
+        CurrStep {
+            letter,
+            freed_at: curr_sec + step_to_seconds(letter),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -112,6 +187,11 @@ impl FromStr for Step {
     }
 }
 
+fn step_to_seconds(c: char) -> usize {
+    let alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string();
+    alpha.find(c).unwrap() + 1 + MIN_S_STEP
+}
+
 #[test]
 fn test_step() {
     assert_eq!(
@@ -121,4 +201,10 @@ fn test_step() {
             depends_on: 'P'
         })
     );
+}
+
+#[test]
+fn test_step_to_seconds() {
+    assert_eq!(step_to_seconds('A'), 1 + MIN_S_STEP);
+    assert_eq!(step_to_seconds('Z'), 26 + MIN_S_STEP);
 }
