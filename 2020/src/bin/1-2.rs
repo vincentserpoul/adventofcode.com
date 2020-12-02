@@ -1,17 +1,12 @@
 use std::collections::HashSet;
-use std::io::{self, Read};
 
 type Result<T> = ::std::result::Result<T, Box<dyn ::std::error::Error>>;
 
 fn main() -> Result<()> {
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input)?;
-
-    let mut set: HashSet<i32> = HashSet::new();
-    for l in input.lines() {
-        let n = l.parse::<i32>().unwrap();
-        set.insert(n);
-    }
+    let set = include_str!("../../inputs/1.txt")
+        .split('\n')
+        .map(|it| it.parse::<u32>().unwrap())
+        .collect::<HashSet<u32>>();
 
     let found2 = find_sum(2020, 2, Vec::new(), Vec::new(), &set);
 
@@ -29,18 +24,27 @@ fn main() -> Result<()> {
 }
 
 fn find_sum(
-    target_sum: i32,
+    target_sum: u32,
     target_size: usize,
-    curr: Vec<i32>,
-    mut found: Vec<Vec<i32>>,
-    set: &HashSet<i32>,
-) -> Vec<Vec<i32>> {
-    if curr.iter().sum::<i32>() == target_sum && curr.len() >= target_size {
-        found.push(curr);
+    curr: Vec<u32>,
+    mut found: Vec<Vec<u32>>,
+    set: &HashSet<u32>,
+) -> Vec<Vec<u32>> {
+    if target_size == 0 || target_sum == 0 {
         return found;
     }
 
-    if curr.iter().sum::<i32>() > target_sum || curr.len() == target_size {
+    if curr.iter().sum::<u32>() > target_sum || curr.len() == target_size {
+        return found;
+    }
+
+    if curr.len() == target_size - 1 {
+        let complement_sum = target_sum - curr.iter().sum::<u32>();
+        if set.contains(&complement_sum) {
+            let mut new_curr = curr.clone();
+            new_curr.push(complement_sum);
+            found.push(new_curr);
+        }
         return found;
     }
 
@@ -53,4 +57,4 @@ fn find_sum(
     found
 }
 
-// cargo run --release < 1.txt --bin 1.2
+// cargo run --release --bin 1.2
