@@ -41,7 +41,7 @@ fn find_sum(
     if curr.len() == target_size - 1 {
         let complement_sum = target_sum - curr.iter().sum::<u32>();
         if set.contains(&complement_sum) {
-            let mut new_curr = curr.clone();
+            let mut new_curr = curr;
             new_curr.push(complement_sum);
             found.push(new_curr);
         }
