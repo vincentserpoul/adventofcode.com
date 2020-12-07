@@ -55,4 +55,4 @@ impl Rule {
     }
 }
 
-// cargo run --release --bin 1.2
+// cargo run --release --bin 2.2
