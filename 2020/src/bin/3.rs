@@ -55,7 +55,7 @@ struct Travel {
 }
 
 impl Travel {
-    fn walk(&mut self, forest: &Vec<Vec<Square>>, x: usize, y: usize) -> bool {
+    fn walk(&mut self, forest: &[Vec<Square>], x: usize, y: usize) -> bool {
         if forest.is_empty() {
             panic!("forest is too small");
         }
