@@ -60,11 +60,11 @@ impl FromStr for Instruction {
                 (0_u64, std::u64::MAX),
                 |mut acc, b: (usize, char)| match b.1 {
                     '1' => {
-                        acc.0 = acc.0 | (1 << b.0);
+                        acc.0 |= 1 << b.0;
                         acc
                     }
                     '0' => {
-                        acc.1 = acc.1 & !(1 << b.0);
+                        acc.1 &= !(1 << b.0);
                         acc
                     }
                     _ => acc,
