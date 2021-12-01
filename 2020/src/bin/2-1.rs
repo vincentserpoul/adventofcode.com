@@ -28,7 +28,7 @@ struct Rule {
 
 impl From<&str> for Rule {
     fn from(s: &str) -> Self {
-        let (range, c): (&str, char) = match s.split(' ').collect::<Vec<&str>>() {
+        let (range, c): (&str, char) = match s.split_whitespace().collect::<Vec<&str>>() {
             x if x.len() == 2 && x[1].chars().count() == 1 => (x[0], x[1].chars().next().unwrap()),
             _ => ("0", '0'),
         };

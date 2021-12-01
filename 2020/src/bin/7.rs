@@ -71,7 +71,7 @@ impl FromStr for BagStatement {
         let container = b
             .next()
             .unwrap()
-            .split(' ')
+            .split_whitespace()
             .filter(|w| *w != "bags")
             .collect::<Vec<&str>>()
             .join(" ");
@@ -81,7 +81,7 @@ impl FromStr for BagStatement {
             .split(", ")
             .filter(|s| *s != "no other bags")
             .map(|bc| {
-                let mut bc_q = bc.split(' ');
+                let mut bc_q = bc.split_whitespace();
                 (
                     bc_q.next().unwrap().parse::<u32>().unwrap(),
                     bc_q.filter(|w| *w != "bags" && *w != "bag")

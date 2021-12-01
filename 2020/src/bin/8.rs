@@ -99,7 +99,7 @@ impl FromStr for Instruction {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let vals: Vec<&str> = s.split(' ').collect();
+        let vals: Vec<&str> = s.split_whitespace().collect();
         if vals.len() != 2 {
             return Err(());
         }
