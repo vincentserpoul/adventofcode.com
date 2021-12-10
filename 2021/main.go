@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aoc/day9"
+	"aoc/day10"
 	"fmt"
 )
 
@@ -23,5 +23,7 @@ func main() {
 	// fmt.Println(day8.Day81())
 	// fmt.Println(day8.Day82())
 	// fmt.Println(day9.Day91())
-	fmt.Println(day9.Day92())
+	// fmt.Println(day9.Day92())
+	// fmt.Println(day10.Day101())
+	fmt.Println(day10.Day102())
 }
