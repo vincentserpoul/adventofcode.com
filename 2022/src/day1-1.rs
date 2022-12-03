@@ -5,9 +5,8 @@
     clippy::cargo
 )]
 
+use eyre::Result;
 use std::io::{self, Read};
-
-type Result<T> = ::std::result::Result<T, Box<dyn::std::error::Error>>;
 
 fn main() -> Result<()> {
     let mut input = String::new();
@@ -29,4 +28,4 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-// cargo run --release < 1.txt --bin day1.1
+// cargo run --release < inputs/1.txt --bin day1-1
